@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Kitchen Story - Orders</title>
+
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+
+</head>
+
+
+<body>
+
+<header class="admin-header">
+
+    <h1>Kitchen Story Admin</h1>
+
+    <nav>
+
+        <a href="dashboard.html">
+            Dashboard
+        </a>
+
+        <a href="food-items.html">
+            Food Items
+        </a>
+
+        <a href="orders.html">
+            Orders
+        </a>
+
+        <button id="logoutButton">
+            Logout
+        </button>
+
+    </nav>
+
+</header>
+
+
+<main class="admin-container">
+
+    <h2>Customer Orders</h2>
+
+
+    <p id="ordersMessage">
+        Loading orders...
+    </p>
+
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Order ID
+                    </th>
+
+                    <th>
+                        Customer
+                    </th>
+
+                    <th>
+                        Email
+                    </th>
+
+                    <th>
+                        Total
+                    </th>
+
+                    <th>
+                        Payment Status
+                    </th>
+
+                    <th>
+                        Date
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="ordersTableBody">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</main>
+
+
+<script>
+
+const API_URL =
+    "http://localhost:3000/api";
+
+
+// ===============================
+// ADMIN AUTH CHECK
+// ===============================
+
+if (
+    sessionStorage.getItem(
+        "adminLoggedIn"
+    ) !== "true"
+) {
+
+    window.location.href =
+        "login.html";
+
+}
+
+
+// ===============================
+// LOAD ORDERS
+// ===============================
+
+const ordersTableBody =
+    document.getElementById(
+        "ordersTableBody"
+    );
+
+
+const ordersMessage =
+    document.getElementById(
+        "ordersMessage"
+    );
+
+
+async function loadOrders() {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/admin/orders`
+            );
+
+
+        const orders =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                orders.message ||
+                "Unable to load orders."
+            );
+
+        }
+
+
+        if (orders.length === 0) {
+
+            ordersMessage.textContent =
+                "No orders found.";
+
+            return;
+
+        }
+
+
+        ordersMessage.textContent = "";
+
+
+        ordersTableBody.innerHTML =
+            orders.map(function(order) {
+
+                const date =
+                    new Date(
+                        order.order_date
+                    ).toLocaleString();
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            #${order.id}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                order.customer_name
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                order.email
+                            )}
+                        </td>
+
+                        <td>
+                            R${Number(
+                                order.total_amount
+                            ).toFixed(2)}
+                        </td>
+
+                        <td>
+
+                            <span
+                                class="status ${getStatusClass(
+                                    order.payment_status
+                                )}"
+                            >
+                                ${escapeHtml(
+                                    order.payment_status
+                                )}
+                            </span>
+
+                        </td>
+
+                        <td>
+                            ${date}
+                        </td>
+
+                        <td>
+
+                            <a
+                                href="order-details.html?id=${order.id}"
+                            >
+                                View
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }).join("");
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        ordersMessage.textContent =
+            error.message;
+
+    }
+
+}
+
+
+// ===============================
+// HELPERS
+// ===============================
+
+function getStatusClass(status) {
+
+    return status
+        .toLowerCase()
+        .replace(/\s+/g, "-");
+
+}
+
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// ===============================
+// LOGOUT
+// ===============================
+
+document
+    .getElementById("logoutButton")
+    .addEventListener(
+        "click",
+        function() {
+
+            sessionStorage.clear();
+
+            window.location.href =
+                "login.html";
+
+        }
+    );
+
+
+// Load
+
+loadOrders();
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Kitchen Story - Admin Dashboard</title>
+
+    <link rel="stylesheet" href="admin.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <header class="admin-header">
+
+        <div>
+            <h1>Kitchen Story</h1>
+            <p>Admin Dashboard</p>
+        </div>
+
+        <button
+            class="logout-button"
+            onclick="logout()"
+        >
+            Logout
+        </button>
+
+    </header>
+
+
+   <main class="admin-container">
+
+    <h2>Dashboard</h2>
+
+    <p id="dashboardMessage">
+        Loading dashboard...
+    </p>
+
+
+    <div class="dashboard-cards">
+
+        <div class="dashboard-card">
+
+            <h3>
+                Total Food Items
+            </h3>
+
+            <p id="totalFoodItems">
+                -
+            </p>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Available Food Items
+            </h3>
+
+            <p id="availableFoodItems">
+                -
+            </p>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Total Orders
+            </h3>
+
+            <p id="totalOrders">
+                -
+            </p>
+
+        </div>
+
+
+        <div class="dashboard-card">
+
+            <h3>
+                Paid Orders
+            </h3>
+
+            <p id="paidOrders">
+                -
+            </p>
+
+        </div>
+
+
+        <div class="dashboard-card sales-card">
+
+            <h3>
+                Total Sales
+            </h3>
+
+            <p id="totalSales">
+                -
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-links">
+
+        <a href="food-items.html">
+            Manage Food Items
+        </a>
+
+        <a href="orders.html">
+            View Customer Orders
+        </a>
+
+        <a href="change-password.html">
+    Change Password
+</a>
+
+    </div>
+
+</main>
+
+</div>
+
+
+<script>
+
+const API_URL =
+    "http://localhost:3000/api";
+
+
+// ===============================
+// AUTH CHECK
+// ===============================
+
+if (
+    sessionStorage.getItem(
+        "adminLoggedIn"
+    ) !== "true"
+) {
+
+    window.location.href =
+        "login.html";
+
+}
+
+
+// ===============================
+// LOAD DASHBOARD
+// ===============================
+
+async function loadDashboard() {
+
+    const message =
+        document.getElementById(
+            "dashboardMessage"
+        );
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/admin/dashboard`
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load dashboard."
+            );
+
+        }
+
+
+        document.getElementById(
+            "totalFoodItems"
+        ).textContent =
+            data.total_food_items;
+
+
+        document.getElementById(
+            "availableFoodItems"
+        ).textContent =
+            data.available_food_items;
+
+
+        document.getElementById(
+            "totalOrders"
+        ).textContent =
+            data.total_orders;
+
+
+        document.getElementById(
+            "paidOrders"
+        ).textContent =
+            data.paid_orders;
+
+
+        document.getElementById(
+            "totalSales"
+        ).textContent =
+            `R${Number(
+                data.total_sales
+            ).toFixed(2)}`;
+
+
+        message.textContent = "";
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        message.textContent =
+            error.message;
+
+    }
+
+}
+
+
+// ===============================
+// LOGOUT
+// ===============================
+
+const logoutButton =
+    document.getElementById(
+        "logoutButton"
+    );
+
+
+if (logoutButton) {
+
+    logoutButton.addEventListener(
+        "click",
+        function() {
+
+            sessionStorage.clear();
+
+            window.location.href =
+                "login.html";
+
+        }
+    );
+
+}
+
+
+loadDashboard();
+
+</script>
+
+</body>
+</html>

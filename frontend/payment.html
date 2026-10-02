@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Kitchen Story - Payment</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+<header>
+
+    <h1>Kitchen Story</h1>
+
+    <p>Payment</p>
+
+</header>
+
+
+<main class="payment-container">
+
+    <h2>Complete Payment</h2>
+
+
+    <div id="paymentDetails">
+
+        Loading order...
+
+    </div>
+
+
+    <form id="paymentForm">
+
+        <h3>Payment Method</h3>
+
+
+        <label>
+            <input
+                type="radio"
+                name="paymentMethod"
+                value="Card"
+                checked
+            >
+
+            Card
+        </label>
+
+
+        <label>
+            <input
+                type="radio"
+                name="paymentMethod"
+                value="Cash"
+            >
+
+            Cash
+        </label>
+
+
+        <button type="submit">
+
+            Pay Now
+
+        </button>
+
+    </form>
+
+
+    <p id="paymentMessage"></p>
+
+</main>
+
+
+<script>
+
+const API_URL =
+    "http://localhost:3000/api";
+
+
+const orderId =
+    localStorage.getItem("orderId");
+
+
+const paymentDetails =
+    document.getElementById(
+        "paymentDetails"
+    );
+
+
+const paymentForm =
+    document.getElementById(
+        "paymentForm"
+    );
+
+
+const paymentMessage =
+    document.getElementById(
+        "paymentMessage"
+    );
+
+
+// Check order
+
+if (!orderId) {
+
+    paymentDetails.innerHTML = `
+
+        <p>
+            No order was found.
+        </p>
+
+        <a href="index.html">
+            Return to Home
+        </a>
+
+    `;
+
+    paymentForm.style.display =
+        "none";
+
+} else {
+
+    loadOrder();
+
+}
+
+
+// Load order
+
+async function loadOrder() {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/orders/${orderId}`
+            );
+
+
+        const result =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.message
+            );
+
+        }
+
+
+        displayOrder(result);
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        paymentDetails.innerHTML = `
+
+            <p>
+                ${error.message}
+            </p>
+
+        `;
+
+    }
+
+}
+
+
+// Display order
+
+function displayOrder(data) {
+
+    const order =
+        data.order;
+
+
+    const items =
+        data.items;
+
+
+    paymentDetails.innerHTML = `
+
+        <div class="order-summary">
+
+            <h3>
+                Order #${order.id}
+            </h3>
+
+
+            ${items.map(function(item) {
+
+                return `
+
+                    <div class="order-item">
+
+                        <span>
+                            ${item.name}
+                            ×
+                            ${item.quantity}
+                        </span>
+
+                        <span>
+                            R${
+                                (
+                                    Number(
+                                        item.price
+                                    ) *
+                                    item.quantity
+                                ).toFixed(2)
+                            }
+                        </span>
+
+                    </div>
+
+                `;
+
+            }).join("")}
+
+
+            <hr>
+
+
+            <h3>
+                Total:
+                R${Number(
+                    order.total_amount
+                ).toFixed(2)}
+            </h3>
+
+        </div>
+
+    `;
+
+}
+
+
+// Process payment
+
+paymentForm.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        const paymentMethod =
+            document.querySelector(
+                'input[name="paymentMethod"]:checked'
+            ).value;
+
+
+        paymentMessage.textContent =
+            "Processing payment...";
+
+
+        paymentMessage.style.color =
+            "black";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/payments`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            orderId:
+                                Number(orderId),
+
+                            paymentMethod
+
+                        })
+
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    result.message
+                );
+
+            }
+
+
+            // Save transaction
+
+            localStorage.setItem(
+                "transactionId",
+                result.transactionId
+            );
+
+
+            // Go to confirmation
+
+            window.location.href =
+                "confirmation.html";
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            paymentMessage.textContent =
+                error.message;
+
+
+            paymentMessage.style.color =
+                "red";
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+
+</html>

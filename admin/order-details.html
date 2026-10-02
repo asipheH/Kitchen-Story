@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Kitchen Story - Order Details</title>
+
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+
+</head>
+
+
+<body>
+
+<header class="admin-header">
+
+    <h1>Kitchen Story Admin</h1>
+
+    <nav>
+
+        <a href="dashboard.html">
+            Dashboard
+        </a>
+
+        <a href="food-items.html">
+            Food Items
+        </a>
+
+        <a href="orders.html">
+            Orders
+        </a>
+
+        <button id="logoutButton">
+            Logout
+        </button>
+
+    </nav>
+
+</header>
+
+
+<main class="admin-container">
+
+    <a href="orders.html">
+        ← Back to Orders
+    </a>
+
+
+    <h2>
+        Order Details
+    </h2>
+
+
+    <p id="message">
+        Loading order...
+    </p>
+
+
+    <div id="orderDetails">
+
+    </div>
+
+</main>
+
+
+<script>
+
+const API_URL =
+    "http://localhost:3000/api";
+
+
+const orderId =
+    new URLSearchParams(
+        window.location.search
+    ).get("id");
+
+
+const message =
+    document.getElementById(
+        "message"
+    );
+
+
+const orderDetails =
+    document.getElementById(
+        "orderDetails"
+    );
+
+
+// Authentication
+
+if (
+    sessionStorage.getItem(
+        "adminLoggedIn"
+    ) !== "true"
+) {
+
+    window.location.href =
+        "login.html";
+
+}
+
+
+// Check ID
+
+if (!orderId) {
+
+    message.textContent =
+        "No order ID was provided.";
+
+} else {
+
+    loadOrder();
+
+}
+
+
+// Load order
+
+async function loadOrder() {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/admin/orders/${orderId}`
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load order."
+            );
+
+        }
+
+
+        message.textContent = "";
+
+        displayOrder(data);
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            error.message;
+
+    }
+
+}
+
+
+// Display order
+
+function displayOrder(data) {
+
+    const order =
+        data.order;
+
+
+    const items =
+        data.items;
+
+
+    const payment =
+        data.payment;
+
+
+    const formattedDate =
+        order.order_date
+            ? new Date(
+                order.order_date
+            ).toLocaleString()
+            : "N/A";
+
+
+    const itemsHtml =
+        items.map(function(item) {
+
+            const total =
+                Number(item.price) *
+                Number(item.quantity);
+
+
+            return `
+
+                <tr>
+
+                    <td>
+                        ${escapeHtml(
+                            item.name
+                        )}
+                    </td>
+
+                    <td>
+                        ${item.quantity}
+                    </td>
+
+                    <td>
+                        R${Number(
+                            item.price
+                        ).toFixed(2)}
+                    </td>
+
+                    <td>
+                        R${total.toFixed(2)}
+                    </td>
+
+                </tr>
+
+            `;
+
+        }).join("");
+
+
+    let paymentHtml = `
+        <p>
+            No payment record found.
+        </p>
+    `;
+
+
+    if (payment) {
+
+        paymentHtml = `
+
+            <p>
+                <strong>
+                    Payment Status:
+                </strong>
+
+                ${escapeHtml(
+                    payment.payment_status
+                )}
+            </p>
+
+
+            <p>
+                <strong>
+                    Payment Method:
+                </strong>
+
+                ${escapeHtml(
+                    payment.payment_method
+                )}
+            </p>
+
+
+            <p>
+                <strong>
+                    Transaction ID:
+                </strong>
+
+                ${escapeHtml(
+                    payment.transaction_id
+                )}
+            </p>
+
+
+            <p>
+                <strong>
+                    Payment Amount:
+                </strong>
+
+                R${Number(
+                    payment.amount
+                ).toFixed(2)}
+            </p>
+
+
+            <p>
+                <strong>
+                    Payment Date:
+                </strong>
+
+                ${
+                    payment.payment_date
+                        ? new Date(
+                            payment.payment_date
+                        ).toLocaleString()
+                        : "N/A"
+                }
+            </p>
+
+        `;
+
+    }
+
+
+    orderDetails.innerHTML = `
+
+        <section class="detail-card">
+
+            <h3>
+                Order #${order.id}
+            </h3>
+
+
+            <p>
+                <strong>
+                    Customer:
+                </strong>
+
+                ${escapeHtml(
+                    order.customer_name
+                )}
+            </p>
+
+
+            <p>
+                <strong>
+                    Email:
+                </strong>
+
+                ${escapeHtml(
+                    order.email
+                )}
+            </p>
+
+
+            <p>
+                <strong>
+                    Order Date:
+                </strong>
+
+                ${formattedDate}
+            </p>
+
+
+            <p>
+                <strong>
+                    Order Status:
+                </strong>
+
+                ${escapeHtml(
+                    order.payment_status
+                )}
+            </p>
+
+        </section>
+
+
+        <section class="detail-card">
+
+            <h3>
+                Order Items
+            </h3>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Item
+                            </th>
+
+                            <th>
+                                Quantity
+                            </th>
+
+                            <th>
+                                Price
+                            </th>
+
+                            <th>
+                                Subtotal
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        ${itemsHtml}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <h2 class="order-total">
+
+                Total:
+                R${Number(
+                    order.total_amount
+                ).toFixed(2)}
+
+            </h2>
+
+        </section>
+
+
+        <section class="detail-card">
+
+            <h3>
+                Payment Information
+            </h3>
+
+
+            ${paymentHtml}
+
+        </section>
+
+    `;
+
+}
+
+
+// Escape HTML
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// Logout
+
+document
+    .getElementById("logoutButton")
+    .addEventListener(
+        "click",
+        function() {
+
+            sessionStorage.clear();
+
+            window.location.href =
+                "login.html";
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html>

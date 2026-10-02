@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Kitchen Story - Order Confirmation</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+<header>
+
+    <h1>Kitchen Story</h1>
+
+</header>
+
+
+<main class="confirmation-container">
+
+    <div id="confirmation">
+
+        <p>Loading your order...</p>
+
+    </div>
+
+</main>
+
+
+<script>
+
+const API_URL =
+    "http://localhost:3000/api";
+
+
+const orderId =
+    localStorage.getItem("orderId");
+
+
+const transactionId =
+    localStorage.getItem("transactionId");
+
+
+const confirmation =
+    document.getElementById(
+        "confirmation"
+    );
+
+
+if (!orderId) {
+
+    confirmation.innerHTML = `
+
+        <h2>Order Not Found</h2>
+
+        <p>
+            We could not find your order.
+        </p>
+
+        <a href="index.html">
+            Return to Home
+        </a>
+
+    `;
+
+} else {
+
+    loadConfirmation();
+
+}
+
+
+async function loadConfirmation() {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/orders/${orderId}`
+            );
+
+
+        const result =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.message ||
+                "Unable to load order."
+            );
+
+        }
+
+
+        displayConfirmation(result);
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        confirmation.innerHTML = `
+
+            <h2>Unable to Load Order</h2>
+
+            <p>
+                ${error.message}
+            </p>
+
+        `;
+
+    }
+
+}
+
+
+function displayConfirmation(data) {
+
+    const order =
+        data.order;
+
+
+    const items =
+        data.items;
+
+
+    confirmation.innerHTML = `
+
+        <div class="success-icon">
+            ✓
+        </div>
+
+
+        <h2>
+            Order Confirmed!
+        </h2>
+
+
+        <p>
+            Thank you,
+            <strong>
+                ${order.customer_name}
+            </strong>.
+        </p>
+
+
+        <p>
+            Your order has been successfully
+            processed.
+        </p>
+
+
+        <div class="confirmation-details">
+
+            <h3>
+                Order #${order.id}
+            </h3>
+
+
+            <p>
+                <strong>
+                    Email:
+                </strong>
+
+                ${order.email}
+            </p>
+
+
+            <p>
+                <strong>
+                    Payment Status:
+                </strong>
+
+                ${order.payment_status}
+            </p>
+
+
+            ${
+                transactionId
+                ?
+                `
+                <p>
+                    <strong>
+                        Transaction ID:
+                    </strong>
+
+                    ${transactionId}
+                </p>
+                `
+                :
+                ""
+            }
+
+
+            <hr>
+
+
+            <h3>
+                Items
+            </h3>
+
+
+            <div class="confirmation-items">
+
+                ${
+                    items.map(function(item) {
+
+                        const itemTotal =
+                            Number(
+                                item.price
+                            ) *
+                            Number(
+                                item.quantity
+                            );
+
+
+                        return `
+
+                            <div class="order-item">
+
+                                <span>
+                                    ${item.name}
+                                    ×
+                                    ${item.quantity}
+                                </span>
+
+                                <span>
+                                    R${itemTotal.toFixed(2)}
+                                </span>
+
+                            </div>
+
+                        `;
+
+                    }).join("")
+                }
+
+            </div>
+
+
+            <hr>
+
+
+            <h2>
+                Total:
+                R${Number(
+                    order.total_amount
+                ).toFixed(2)}
+            </h2>
+
+        </div>
+
+
+        <div class="confirmation-actions">
+
+            <a
+                href="index.html"
+                class="button"
+            >
+                Continue Shopping
+            </a>
+
+        </div>
+
+    `;
+
+}
+
+</script>
+
+</body>
+
+</html>

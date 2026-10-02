@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Kitchen Story - Order</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+<header>
+
+    <h1>Kitchen Story</h1>
+
+    <p>Order Summary</p>
+
+</header>
+
+
+<main class="order-container">
+
+    <h2>Your Order</h2>
+
+
+    <div id="orderDetails">
+
+        Loading...
+
+    </div>
+
+
+    <hr>
+
+
+    <h2>Customer Details</h2>
+
+
+    <form id="orderForm">
+
+        <label for="customerName">
+            Full Name
+        </label>
+
+        <input
+            type="text"
+            id="customerName"
+            placeholder="Enter your full name"
+            required
+        >
+
+
+        <label for="customerEmail">
+            Email Address
+        </label>
+
+        <input
+            type="email"
+            id="customerEmail"
+            placeholder="Enter your email"
+            required
+        >
+
+
+        <button type="submit">
+            Proceed to Payment
+        </button>
+
+    </form>
+
+
+    <p id="orderMessage"></p>
+
+</main>
+
+
+<script>
+
+const API_URL =
+    "http://localhost:3000/api";
+
+
+// Get selected item
+
+const selectedItem =
+    JSON.parse(
+        localStorage.getItem("selectedItem")
+    );
+
+
+const orderDetails =
+    document.getElementById(
+        "orderDetails"
+    );
+
+
+// Check item
+
+if (!selectedItem) {
+
+    orderDetails.innerHTML = `
+        <p>
+            No food item has been selected.
+        </p>
+
+        <a href="index.html">
+            Return to Home
+        </a>
+    `;
+
+} else {
+
+    displayOrder();
+
+}
+
+
+// Display order
+
+function displayOrder() {
+
+    const price =
+        Number(selectedItem.price);
+
+
+    orderDetails.innerHTML = `
+
+        <div class="food-card">
+
+            <h3>
+                ${selectedItem.name}
+            </h3>
+
+            <p>
+                ${selectedItem.description}
+            </p>
+
+            <p>
+                <strong>
+                    Category:
+                </strong>
+
+                ${selectedItem.category}
+            </p>
+
+            <p>
+                <strong>
+                    Quantity:
+                </strong>
+
+                1
+            </p>
+
+            <p class="price">
+                R${price.toFixed(2)}
+            </p>
+
+        </div>
+
+    `;
+
+}
+
+
+// Submit order
+
+document
+    .getElementById("orderForm")
+    .addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            if (!selectedItem) {
+
+                return;
+            }
+
+
+            const customerName =
+                document.getElementById(
+                    "customerName"
+                ).value.trim();
+
+
+            const email =
+                document.getElementById(
+                    "customerEmail"
+                ).value.trim();
+
+
+            const message =
+                document.getElementById(
+                    "orderMessage"
+                );
+
+
+            message.textContent =
+                "Creating your order...";
+
+
+            message.style.color =
+                "black";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/orders`,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+
+                                customerName,
+
+                                email,
+
+                                items: [
+
+                                    {
+                                        foodItemId:
+                                            selectedItem.id,
+
+                                        quantity: 1
+
+                                    }
+
+                                ]
+
+                            })
+
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        result.message ||
+                        "Unable to create order."
+                    );
+
+                }
+
+
+                // Save order information
+
+                localStorage.setItem(
+                    "orderId",
+                    result.orderId
+                );
+
+
+                localStorage.setItem(
+                    "orderTotal",
+                    result.totalAmount
+                );
+
+
+                // Go to payment
+
+                window.location.href =
+                    "payment.html";
+
+
+            } catch (error) {
+
+                console.error(error);
+
+
+                message.textContent =
+                    error.message;
+
+
+                message.style.color =
+                    "red";
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html>
